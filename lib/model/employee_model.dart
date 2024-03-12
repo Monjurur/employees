@@ -1,64 +1,76 @@
+import 'dart:convert';
 
 class EmployeeModel {
-  int id;
-  String empCode;
-  String firstName;
+  int? id;
+  String? empId;
+  String? firstName;
   String? lastName;
-  String? nickname;
-  String formatName;
-  String photo;
-  String fullName;
-  String? devicePassword;
-  String? cardNo;
-  DepartmentModel department;
+  String? phoneNumber;
+  String? photo;
+  String? email;
+  String? department;
+  String? description;
+  int? createdAt;
+  int? lastModified;
 
   EmployeeModel({
-    required this.id,
-    required this.empCode,
-    required this.firstName,
-    required this.lastName,
-    required this.nickname,
-    required this.formatName,
-    required this.photo,
-    required this.fullName,
-    required this.devicePassword,
-    required this.cardNo,
-    required this.department,
+    this.id,
+    this.empId,
+    this.firstName,
+    this.lastName,
+    this.phoneNumber,
+    this.photo,
+    this.email,
+    this.department,
+    this.description,
+    this.createdAt,
+    this.lastModified,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json) {
     return EmployeeModel(
       id: json['id'] ?? 0,
-      empCode: json['emp_code'] ?? "",
-      firstName: json['first_name'] ?? "",
-      lastName: json['last_name'],
-      nickname: json['nickname'],
-      formatName: json['format_name'] ?? "",
+      empId: json['emp_Id'] ?? "",
+      firstName: json['firstName'] ?? "",
+      lastName: json['lastName'],
+      phoneNumber: json['phoneNumber'] ?? "",
       photo: json['photo'] ?? "",
-      fullName: json['full_name'] ?? "",
-      devicePassword: json['device_password'],
-      cardNo: json['card_no'],
-      department: DepartmentModel.fromJson(json['department']),
+      email: json['email'] == null ? "" : json['email'],
+      department: json['department'] == null ? '' : json['department'],
+      description: json['description'] ?? "",
+      createdAt: json['createdAt'] ?? '',
+      lastModified: json['lastModified'] ?? '',
     );
   }
-}
 
-class DepartmentModel {
-  int id;
-  String deptCode;
-  String deptName;
-
-  DepartmentModel({
-    required this.id,
-    required this.deptCode,
-    required this.deptName,
-  });
-
-  factory DepartmentModel.fromJson(Map<String, dynamic> json) {
-    return DepartmentModel(
-      id: json['id'] ?? 0,
-      deptCode: json['dept_code'] ?? "",
-      deptName: json['dept_name'] ?? "",
-    );
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['emp_id'] = empId;
+    data['firstName'] = firstName;
+    data['lastName'] = lastName;
+    data['phoneNumber'] = phoneNumber;
+    data['photo'] = photo;
+    data['email'] = email;
+    data['department'] = department;
+    data['description'] = description;
+    data['createdAt'] = createdAt;
+    data['lastModified'] = lastModified;
+    return data;
   }
+
+  Map<String, dynamic> toDBJson() => {
+        "id": id,
+        "employeeId": empId,
+        "firstName": firstName,
+        "lastName": lastName,
+        "phoneNumber": phoneNumber,
+        "photo": photo,
+        "email": email,
+        "department": department,
+        "description": description,
+        "createdAt": createdAt,
+        "lastModified": lastModified,
+        "fullObject": json.encode(toJson())
+      };
 }

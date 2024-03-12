@@ -1,4 +1,5 @@
-import 'package:employees/pages/employee_list.dart';
+
+import 'package:employees/pages/pickAndSave.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -63,11 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   pageNavigator() {
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 1), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const EmployeeList(),
+          builder: (context) =>  const PickAndSave(),
         ),
       );
     });

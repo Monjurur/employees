@@ -1,6 +1,11 @@
-import 'package:employees/model/employee_model.dart';
+import 'dart:convert';
+
+import 'package:employees/database/db_service.dart';
 import 'package:employees/pages/cameraPage.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:employees/database/database.dart' as database;
+
 
 class EmployeeList extends StatefulWidget {
   const EmployeeList({Key? key}) : super(key: key);
@@ -11,13 +16,28 @@ class EmployeeList extends StatefulWidget {
 
 class _EmployeeListState extends State<EmployeeList> {
 
-  List<EmployeeModel> employeeList = [];
+  List<String> employeeList = [];
   bool isLoading = false;
+  late SharedPreferences sharedPreferences;
+  late database.Database _db;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _db = DatabaseService().db;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(icon:Icon(Icons.downloading),onPressed: ()async{
+         /* sharedPreferences = await SharedPreferences.getInstance();
+        employeeList =  sharedPreferences.getStringList("User")!;*/
+        var emp = _db.getAllEmployee();
+print(emp);
+        },),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Employee List"),
       ),
