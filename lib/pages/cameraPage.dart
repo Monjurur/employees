@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'dart:ui' as ui;
-import 'package:employees/database/database.dart';
 import 'package:employees/database/db_service.dart';
 import 'package:employees/model/employee_model.dart';
 import 'package:flutter/cupertino.dart';

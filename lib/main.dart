@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Container(
         color: Colors.white,
-        child: Center(child: Image.asset("assets/images/biker.jpg"),),
+        child: Center(child: Image.asset("assets/images/efgt.jpeg"),),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

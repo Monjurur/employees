@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:employees/pages/table.dart';
-import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -30,10 +28,12 @@ class _PickAndSaveState extends State<PickAndSave> {
 
   List<dynamic> _data = [];
   String? filePath;
+  bool hideList = false;
 
   List<String> listData = [];
   List<Map<String, dynamic>> convertedData = [];
   List<Map<String, dynamic>> getUser = [];
+  List<String> recordList = [];
 
   TextEditingController idController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -50,8 +50,10 @@ class _PickAndSaveState extends State<PickAndSave> {
   }
 
   Future<void> getData() async {
+    hideList = false;
     sharedPreferences = await SharedPreferences.getInstance();
-  await  getListData();
+    await getListData();
+    recordList = sharedPreferences.getStringList("EmployeeRecord") ?? [];
   }
 
   @override
@@ -69,8 +71,8 @@ class _PickAndSaveState extends State<PickAndSave> {
                 child: Column(
                   children: [
                     Container(
-                      width: width / 2,
-                      height: height / 4,
+                      width: width / 2.8,
+                      height: height / 5.8,
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(
@@ -79,11 +81,11 @@ class _PickAndSaveState extends State<PickAndSave> {
                       child: images == null
                           ? Image.asset(
                               "assets/images/empty_image.jpg",
-                              fit: BoxFit.cover,
+                              fit: BoxFit.fill,
                             )
                           : Image.file(
                               images!,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.fill,
                             ),
                     ),
                     const Text(
@@ -91,17 +93,17 @@ class _PickAndSaveState extends State<PickAndSave> {
                       style: TextStyle(fontSize: 25),
                     ),
                     const SizedBox(
-                      height: 40,
+                      height: 20,
                     ),
                     Center(
                       child: SizedBox(
-                        height: 45,
+                        height: 35,
                         width: width / 2,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             elevation: 5, // Add elevation here
                             //padding: EdgeInsets.all(20),
-                            backgroundColor: Colors.lightBlueAccent,
+                            backgroundColor: Colors.green,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
                             ),
@@ -122,11 +124,18 @@ class _PickAndSaveState extends State<PickAndSave> {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text("Camera"),
+                              Text(
+                                "Camera",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
                               SizedBox(
                                 width: 5,
                               ),
-                              Icon(Icons.camera_alt)
+                              Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                              )
                             ],
                           ),
                         ),
@@ -135,207 +144,353 @@ class _PickAndSaveState extends State<PickAndSave> {
                     const SizedBox(
                       height: 30,
                     ),
-                    const Row(
-                      children: [
-                        Text(
-                          'Full Name',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w300,
+                    Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Column(
+                        children: [
+                          const Row(
+                            children: [
+                              Text(
+                                'Employee Name',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                              Text(
+                                '*',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          '*',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
+                          TextFormField(
+                            onChanged: (value) => dataFilter(value),
+                            controller: nameController,
+                            keyboardType: TextInputType.name,
+                            focusNode: nameFocusNode,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Please enter full name';
+                              }
+                              return null;
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Employee Full Name',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w300,
+                              ),
+                              //  border bottom
+                            ),
+                            onTap: () async {
+                              await getData();
+                            },
+                            onEditingComplete: () {
+                              setState(() {
+                                /*firstNameFocusNode.unfocus();
+                            lastNameFocusNode.requestFocus();*/
+                              });
+                            },
                           ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      onChanged: (value) => dataFilter(value),
-                      controller: nameController,
-                      keyboardType: TextInputType.name,
-                      focusNode: nameFocusNode,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter full name';
-                        }
-                        return null;
-                      },
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Add full Name',
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w300,
-                        ),
-                        //  border bottom
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          const Row(
+                            children: [
+                              Text(
+                                'Employee Id',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                              Text(
+                                '*',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: idController,
+                            onChanged: (value) => dataFilter(value),
+                            onFieldSubmitted: (value) => dataFilter(value),
+                            keyboardType: TextInputType.name,
+                            focusNode: idFocusNode,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Please enter Id';
+                              }
+                              return null;
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Add Employee Id',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w300,
+                              ),
+                              //  border bottom
+                            ),
+                            onTap: () async {
+                              await getData();
+                              setState(() {});
+                            },
+                            onEditingComplete: () {
+                              setState(() {
+                                /*firstNameFocusNode.unfocus();
+                            lastNameFocusNode.requestFocus();*/
+                              });
+                            },
+                          ),
+                        ],
                       ),
-                      onTap: () {},
-                      onEditingComplete: () {
-                        setState(() {
-                          /*firstNameFocusNode.unfocus();
-                          lastNameFocusNode.requestFocus();*/
-                        });
-                      },
                     ),
                     const SizedBox(
-                      height: 10,
+                      height: 20,
                     ),
-                    const Row(
-                      children: [
-                        Text(
-                          'Id',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                        Text(
-                          '*',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      controller: idController,
-                      onFieldSubmitted: (value) => dataFilterById(value),
-                      keyboardType: TextInputType.name,
-                      focusNode: idFocusNode,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter Id';
-                        }
-                        return null;
-                      },
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Add Id',
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w300,
-                        ),
-                        //  border bottom
-                      ),
-                      onTap: () {},
-                      onEditingComplete: () {
-                        setState(() {
-                          /*firstNameFocusNode.unfocus();
-                          lastNameFocusNode.requestFocus();*/
-                        });
-                      },
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
+                    hideList
+                        ? const SizedBox()
+                        : getUser.isNotEmpty
+                            ? Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.shade300,
+                                    borderRadius:
+                                        const BorderRadius.all(Radius.circular(5))),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            '*Please Upload .csv File Only',
+                                            style: TextStyle(
+                                                fontSize: 9,
+                                                color: Colors.black),
+                                          ),
+                                          SizedBox(
+                                            height: 35,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      Colors.yellow.shade600,
+                                                  elevation:
+                                                      8, // Add elevation here
+                                                  //padding: EdgeInsets.all(20),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  )),
+                                              onPressed: () async {
+                                                showAlertDialog(context);
+                                                /*await   sharedPreferences.remove("Employee");
+                                            await pickCSVFile();
+
+                                            await getListData();*/
+                                              },
+                                              child: const Text(
+                                                'Re-Upload',
+                                                style: TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      SizedBox(
+                                        height: height / 4,
+                                        child: ListView.builder(
+                                          itemCount: getUser.length,
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
+                                            return InkWell(
+                                              onTap: () {
+                                                idController.text =
+                                                    getUser[index]
+                                                        ["Identifier"];
+                                                nameController.text =
+                                                    getUser[index]["Username"];
+                                                setState(() {
+                                                  hideList = true;
+                                                });
+                                              },
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top: 2, bottom: 1),
+                                                child: Card(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5.0),
+                                                  ),
+                                                  margin: EdgeInsets.zero,
+                                                  //shadowColor: Colors.blue,
+                                                  //color: Colors.grey,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    //contentPadding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 0.0),
+                                                    visualDensity:
+                                                        const VisualDensity(
+                                                            horizontal: 0,
+                                                            vertical: -4),
+                                                    title: Text(
+                                                      'Username: ${getUser[index]["Username"]}',
+                                                      style: const TextStyle(
+                                                          fontSize: 15),
+                                                    ),
+                                                    subtitle: Text(
+                                                        'Id: ${getUser[index]["Identifier"]}',
+                                                        style: const TextStyle(
+                                                            fontSize: 15)),
+                                                    trailing: Column(
+                                                      children: [
+                                                        for (int i = 0;
+                                                            i <
+                                                                recordList
+                                                                    .length;
+                                                            i++) ...{
+                                                          getUser[index][
+                                                                      "Identifier"] ==
+                                                                  (recordList[i] ?? '')
+                                                              ? const Text(
+                                                                  "Image Taken",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .blue,fontSize: 14,fontWeight: FontWeight.bold),
+                                                                )
+                                                              : const SizedBox(),
+                                                        }
+                                                      ],
+                                                    ),
+                                                    //recordList.forEach((element) { })
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : const SizedBox(),
                     const SizedBox(
                       height: 40,
                     ),
-                    /* listData.isEmpty
-                        ? Container()
-                        : Center(
-                            child: CustomTable(
-                              tdata: _data,
-                            ),
-                          ),*/
                     getUser.isNotEmpty
-                        ? SizedBox(
-                            //color: Colors.lightBlueAccent,
-                            height: height / 5,
-                            child: ListView.builder(
-                              itemCount: getUser.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return InkWell(
-                                  onTap: () {
-                                    idController.text =
-                                        getUser[index]["Identifier"];
-                                    nameController.text =
-                                        getUser[index]["Username"];
-                                    setState(() {
-                                      getUser = [];
-                                    });
-                                  },
-                                  child: Card(
-                                    shadowColor: Colors.grey,
-                                    child: ListTile(
-                                      title: Text(
-                                          'Username: ${getUser[index]["Username"]}'),
-                                      subtitle: Text(
-                                          'Id: ${getUser[index]["Identifier"]}'),
-                                    ),
-                                  ),
-                                );
-                              },
+                        ? Center(
+                            child: SizedBox(
+                              height: 45,
+                              width: width / 2,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    elevation: 8, // Add elevation here
+                                    //padding: EdgeInsets.all(20),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    )),
+                                onPressed: () async {
+                                  List<String> recordList = sharedPreferences
+                                          .getStringList("EmployeeRecord")
+                                          ?.toList() ??
+                                      [];
+                                  if (formKey.currentState!.validate()) {
+                                    if (imagePath != null) {
+                                      saveImageToGallery(
+                                          imagePath!,
+                                          idController.text,
+                                          nameController.text);
+                                      if(recordList.contains(idController.text)){
+                                        recordList.remove(idController.text);
+                                      }
+                                      recordList.add(idController.text);
+                                      sharedPreferences.setStringList(
+                                          "EmployeeRecord", recordList);
+                                      await getData();
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        backgroundColor:
+                                            Colors.deepOrangeAccent,
+                                        content: Text("Pick Image Please"),
+                                      ));
+                                    }
+                                  }
+                                },
+                                child: const Text(
+                                  'Save Image',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
+                                ),
+                              ),
                             ),
                           )
-                        : SizedBox(),
-                    SizedBox(
-                      height: 40,
-                    ),
-                    Center(
-                      child: SizedBox(
-                        height: 45,
-                        width: width / 2,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            elevation: 8, // Add elevation here
-                            //padding: EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                              )
-                          ),
-                          onPressed: () async {
-                             if (formKey.currentState!.validate()) {
-                              if (imagePath != null) {
-                                saveImageToGallery(imagePath!, idController.text,
-                                    nameController.text);
-                              }else{
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                  backgroundColor: Colors.deepOrangeAccent,
-                                  content: Text("Pick Image Please"),
-                                ));
-                              }
-                            }
-                          },
-                          child: const Text('Save Image'),
-                        ),
-                      ),
-                    ),
+                        : const SizedBox(),
                     const SizedBox(
-                      height: 50,
+                      height: 20,
                     ),
-                    Center(
-                      child: SizedBox(
-                        height: 45,
-                        width: width / 2,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            elevation: 8, // Add elevation here
-                            //padding: EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                              )
-                          ),
-                          onPressed: () async {
-                            await pickCSVFile();
+                    getUser.isEmpty
+                        ? Center(
+                            child: SizedBox(
+                              //height: 35,
+                              width: width / 2,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    elevation: 5, // Add elevation here
+                                    //padding: EdgeInsets.all(20),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    )),
+                                onPressed: () async {
+                                  await pickCSVFile();
 
-                            await getListData();
-                          },
-                          child: const Text('CSV File Upload'),
-                        ),
-                      ),
-                    ),
+                                  await getListData();
+                                },
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Upload Employee List',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
+                                    Text(
+                                      '*Please Upload .csv File Only',
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          color: Colors.grey.shade300),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : const SizedBox(),
                   ],
                 ),
               ),
@@ -343,6 +498,35 @@ class _PickAndSaveState extends State<PickAndSave> {
           ),
         ),
       ),
+    );
+  }
+
+  showAlertDialog(BuildContext context) {
+    // set up the button
+    Widget okButton = TextButton(
+      child: const Text("OK"),
+      onPressed: () {},
+    );
+    Widget cancelButton = TextButton(
+      child: const Text("Cancel"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      backgroundColor: Colors.white,
+      title: const Text("My title"),
+      content: const Text("This is my message."),
+      actions: [cancelButton, okButton],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 
@@ -372,14 +556,17 @@ class _PickAndSaveState extends State<PickAndSave> {
     List<Map<String, dynamic>> getUserResult = [];
     if (enteredKeyword.isEmpty) {
       getUserResult = convertedData;
-      setState(() {});
+      setState(() {
+        hideList = false;
+      });
       idController.clear();
     } else {
       // Search for the keyword in convertedData
       getUserResult = convertedData
           .where((element) =>
               element["Username"]
-                  .toString().toUpperCase()
+                  .toString()
+                  .toUpperCase()
                   .contains(enteredKeyword.toUpperCase()) ||
               element["Identifier"]
                   .toString()
@@ -391,6 +578,7 @@ class _PickAndSaveState extends State<PickAndSave> {
       getUser = getUserResult;
     });
   }
+
   void dataFilterById(String enteredKeyword) {
     List<Map<String, dynamic>> getUserResult = [];
     if (enteredKeyword.isEmpty) {
@@ -400,7 +588,9 @@ class _PickAndSaveState extends State<PickAndSave> {
     } else {
       // Search for the keyword in convertedData
       getUserResult = convertedData
-          .where((element) => element["Identifier"].toString()==(enteredKeyword.toLowerCase()))
+          .where((element) =>
+              element["Identifier"].toString() ==
+              (enteredKeyword.toLowerCase()))
           .toList();
       print(getUserResult);
     }
@@ -413,7 +603,6 @@ class _PickAndSaveState extends State<PickAndSave> {
     String dataString = sharedPreferences.getStringList("Employee").toString();
     convertedData = convertToListOfMaps(dataString);
     setState(() {});
-    print(convertedData);
     getUser = convertedData;
   }
 
@@ -499,6 +688,7 @@ class _PickAndSaveState extends State<PickAndSave> {
 
   Future<void> saveImageToGallery(
       String imagePath, String id, String name) async {
+    if(imagePath.isNotEmpty){
     await ImageGallerySaver.saveFile(imagePath, name: '$id-$name');
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -514,5 +704,13 @@ class _PickAndSaveState extends State<PickAndSave> {
     idFocusNode.unfocus();
     nameFocusNode.unfocus();
     setState(() {});
+  }else{
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Center(child: Text("Pick Image First")),
+        ));
+      }
+    }
   }
 }
