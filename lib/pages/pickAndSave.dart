@@ -72,7 +72,7 @@ class _PickAndSaveState extends State<PickAndSave> {
                   children: [
                     Container(
                       width: width / 2.8,
-                      height: height / 5.8,
+                      height: height / 5,
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(
@@ -93,7 +93,7 @@ class _PickAndSaveState extends State<PickAndSave> {
                       style: TextStyle(fontSize: 25),
                     ),
                     const SizedBox(
-                      height: 20,
+                      height: 15,
                     ),
                     Center(
                       child: SizedBox(
@@ -301,10 +301,7 @@ class _PickAndSaveState extends State<PickAndSave> {
                                                   )),
                                               onPressed: () async {
                                                 showAlertDialog(context);
-                                                /*await   sharedPreferences.remove("Employee");
-                                            await pickCSVFile();
 
-                                            await getListData();*/
                                               },
                                               child: const Text(
                                                 'Re-Upload',
@@ -397,7 +394,7 @@ class _PickAndSaveState extends State<PickAndSave> {
                               )
                             : const SizedBox(),
                     const SizedBox(
-                      height: 40,
+                      height: 30,
                     ),
                     getUser.isNotEmpty
                         ? Center(
@@ -502,10 +499,14 @@ class _PickAndSaveState extends State<PickAndSave> {
   }
 
   showAlertDialog(BuildContext context) {
-    // set up the button
     Widget okButton = TextButton(
       child: const Text("OK"),
-      onPressed: () {},
+      onPressed: () async{
+        await   sharedPreferences.remove("Employee");
+        await pickCSVFile();
+
+        await getListData();
+      },
     );
     Widget cancelButton = TextButton(
       child: const Text("Cancel"),
@@ -516,8 +517,8 @@ class _PickAndSaveState extends State<PickAndSave> {
     // set up the AlertDialog
     AlertDialog alert = AlertDialog(
       backgroundColor: Colors.white,
-      title: const Text("My title"),
-      content: const Text("This is my message."),
+      title: const Text("Upload CSV File !"),
+      content: const Text("Would you like to upload the employee list again?"),
       actions: [cancelButton, okButton],
     );
 
@@ -532,24 +533,29 @@ class _PickAndSaveState extends State<PickAndSave> {
 
   Future<void> pickCSVFile() async {
     sharedPreferences = await SharedPreferences.getInstance();
-    final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-    if (result == null) result;
-    print(result!.files.first.name);
-    filePath = result.files.first.path;
+    try {
+      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+      if (result == null) result;
+      print(result!.files.first.name);
+      filePath = result.files.first.path;
 
-    final input = File(filePath!).openRead();
-    final fields = await input
-        .transform(utf8.decoder)
-        .transform(const CsvToListConverter())
-        .toList();
-    print(fields);
-    setState(() {
-      _data = fields;
-    });
-    List<String> data1 = _data.map((dynamic item) => item.toString()).toList();
-    List<String> tableData = parseData(data1.toString());
-    sharedPreferences.setStringList("Employee", tableData);
-    listData = parseData("$_data");
+      final input = File(filePath!).openRead();
+      final fields = await input
+          .transform(utf8.decoder)
+          .transform(const CsvToListConverter())
+          .toList();
+      print(fields);
+      setState(() {
+        _data = fields;
+      });
+      List<String> data1 = _data.map((dynamic item) => item.toString())
+          .toList();
+      List<String> tableData = parseData(data1.toString());
+      sharedPreferences.setStringList("Employee", tableData);
+      listData = parseData("$_data");
+    }catch (e){
+      d.log("Error::Pick and CSV File Read:$e");
+    }
   }
 
   void dataFilter(String enteredKeyword) {
@@ -592,7 +598,7 @@ class _PickAndSaveState extends State<PickAndSave> {
               element["Identifier"].toString() ==
               (enteredKeyword.toLowerCase()))
           .toList();
-      print(getUserResult);
+      d.log("$getUserResult");
     }
     setState(() {
       getUser = getUserResult;
